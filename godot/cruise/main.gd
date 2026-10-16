@@ -161,8 +161,8 @@ func render() -> void:
 	title_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title_box)
 	text(title_box,"PLAY / DESIGN   ·   开源改造作品",12,ACCENT)
-	text(title_box,"巡航演练 · 舰队协同",34)
-	text(title_box,"组建队伍，预判意图，让每一张牌都有选择的理由。",15,MUTED)
+	text(title_box,"巡航演练 · 接力改装",34)
+	text(title_box,"三人接力蓄能，战后改装牌组，在首领过载前掌握节奏。",15,MUTED)
 	var day_select: OptionButton = OptionButton.new()
 	day_select.custom_minimum_size = Vector2(185,45)
 	for d in [1,2,4,7,8,9]: day_select.add_item("演练第 %s 天%s" % [d," · 仅兑换" if d == 8 else " · 已结束" if d == 9 else ""],d)
@@ -190,7 +190,8 @@ func render() -> void:
 	if rules.profile.run.is_empty(): render_team(right)
 	var manual: VBoxContainer = section(right,"舰桥操作手册")
 	text(manual,"每回合 3 能量，抽 5 张牌。先选牌，再选高亮目标；群体牌直接施放。敌方意图提前显示，护盾在下个玩家回合清零。倒下队员不可出牌或被恢复。",14,MUTED)
-	text(manual,"基础战斗 → 增益选择 → 首领战。路线 A 战后恢复 12，路线 B 全局伤害 +2 但敌方更强；首通奖励相同。",14,MUTED)
+	text(manual,"基础战斗 → 专属改装三选一 → 增益选择 → 首领战。改装以两张专属牌替换该队员两张基础牌，牌组仍为 12 张；本局有效。路线 A 战后恢复 12，路线 B 全局伤害 +2 但敌方更强。",14,MUTED)
+	text(manual,"三名不同队员各出一张牌，蓄满一次免费舰队指令：齐射 / 屏障 / 补给三选一。接力与就绪状态跨回合保留，指令每回合限一次；倒下队员不能继续参与。新挑战的首领半血后攻击 +3，群攻改到偶数回合，立即显示新意图。",14,MUTED)
 	var controls: HBoxContainer = row(manual)
 	button(controls,"export","导出演练记录",export_record)
 	button(controls,"reset","重置展示存档",func(): ask_confirm("重置会清除本机进度、代币与占位奖励。",func():rules.reset();stage=1;save()))
@@ -247,16 +248,23 @@ func render_run(parent: Node) -> void:
 		var intro: VBoxContainer = section(parent,"VOYAGE / 0%s" % stage)
 		text(intro,rules.config.stages[stage-1].name,30,ACCENT)
 		text(intro,rules.config.stages[stage-1].desc,17,MUTED)
-		text(intro,"01 基础战斗    →    02 增益选择    →    03 阶段首领",16,CYAN)
+		text(intro,"01 基础战斗 → 02 专属改装 → 03 增益选择 → 04 阶段首领",16,CYAN)
 		return
 	var stack: VBoxContainer = section(parent,rules.config.stages[int(run.stage)-1].name)
-	text(stack,"01 基础战斗   →   02 增益选择   →   03 阶段首领",13,CYAN)
+	if not run.get("relayMode",false): text(stack,"这是升级前保存的挑战，保留原规则。完成或放弃后，下次出发启用接力改装。",14,WARM)
+	text(stack,"01 基础战斗 → 02 专属改装 → 03 增益选择 → 04 阶段首领",13,CYAN)
 	match run.node:
 		"route":
 			text(stack,"选择本次航线",29,ACCENT)
 			button(stack,"route_A","路线 A / 稳定补给\n标准敌人。基础战斗后存活队员各恢复 12 生命。",func():rules.choose_route("A"))
 			button(stack,"route_B","路线 B / 风险火力\n全局伤害 +2；普通敌人 HP +6 / 伤害 +1，首领 HP +12 / 伤害 +2。",func():rules.choose_route("B"))
 			text(stack,"两条路线的首通奖励相同：100 代币。",14,WARM)
+		"draft":
+			text(stack,"打捞改装 · 选择本局的关键队员",27,ACCENT)
+			text(stack,"每位队员随机提供一种专属改装。替换该队员的两张基础牌，牌组保持 12 张。选定后进入首领增益选择；刷新不会重抽。",14,MUTED)
+			for option in rules.draft_options():
+				var card: CruiseCrewCard = rules.create_card(option.owner,int(option.kind),0)
+				button(stack,"draft_"+option.owner,"%s / %s · %s 费\n%s\n替换：%s × 2 → 此牌 × 2" % [rules.hero(option.owner).name,card.display_name,card.cost,rules.card_description(card),rules.hero(option.owner).cards[0].name],func():rules.choose_draft(option.owner,int(option.kind)))
 		"buff":
 			text(stack,"基础战斗完成 · 选择首领增益",27,ACCENT)
 			text(stack,"补给生效：存活队员恢复 12。" if run.route == "A" else "突击伤害 +2 继续生效。",14,MUTED)
@@ -277,10 +285,24 @@ func render_battle(parent: Node) -> void:
 	var run: Dictionary = rules.profile.run
 	text(parent,"%s · 第 %s 回合 / 能量 %s / 3" % [rules.config.stages[int(run.stage)-1].boss if run.node=="boss" else "巡航警戒区",rules.turn,rules.energy_stats.mana],24,WARM)
 	text(parent,"当前增益：%s%s" % ["突击伤害 +2 · " if run.route=="B" else "",rules.config.buffs[run.buff].name if not run.buff.is_empty() else "无"],13,CYAN)
+	if not run.get("draft",{}).is_empty():
+		text(parent,"本局改装：%s · %s × 2" % [rules.hero(run.draft.owner).name,rules.hero(run.draft.owner).cards[int(run.draft.kind)].name],14,ACCENT)
+	if run.node == "boss" and run.get("relayMode",false):
+		text(parent,"过载阶段 / 攻击 +3，偶数回合群攻 · 以下意图为本回合实际攻击" if rules.boss_enraged else "常规阶段 / 首领半血时进入过载，请预留防护或指令。",14,WARM)
 	var enemy_row: HBoxContainer = row(parent)
 	for unit in rules.enemies: render_unit(enemy_row,unit)
 	var ally_row: HBoxContainer = row(parent)
 	for unit in rules.allies: render_unit(ally_row,unit)
+	if run.get("relayMode",false):
+		var names: PackedStringArray = []
+		for owner in run.team: names.append(("✓ " if rules.relay.has(owner) else "○ ")+str(rules.hero(owner).name))
+		text(parent,"舰队接力 / %s · %s" % ["  →  ".join(names),"指令就绪" if rules.command_ready else "%s / 3" % rules.relay.size()],16,ACCENT)
+		var commands: HBoxContainer = row(parent)
+		var unavailable: bool = not rules.command_ready or rules.command_used
+		button(commands,"command_strike","齐射 / 全敌 8 伤害",func():rules.use_command("strike"),unavailable)
+		button(commands,"command_barrier","屏障 / 全队 9 护盾",func():rules.use_command("barrier"),unavailable)
+		button(commands,"command_supply","补给 / 全队恢复 6，抽 1",func():rules.use_command("supply"),unavailable)
+		text(parent,"免费 · 蓄能跨回合保留 · 每回合一次"+ (" · 本回合已使用" if rules.command_used else ""),12,MUTED)
 	text(parent,"你的手牌 · 抽牌堆 %s / 弃牌堆 %s" % [rules.draw_pile.cards.size(),rules.discard_pile.cards.size()],16)
 	var cards: GridContainer = GridContainer.new()
 	cards.columns = 5 if get_viewport_rect().size.x > 1100 else 3 if get_viewport_rect().size.x > 800 else 2
@@ -353,5 +375,5 @@ func publish_qa() -> void:
 		if not is_instance_valid(b): continue
 		var rect: Rect2 = b.get_global_rect()
 		buttons[id] = {"x":rect.position.x,"y":rect.position.y,"w":rect.size.x,"h":rect.size.y,"disabled":b.disabled if b is Button else false}
-	var state: Dictionary = {"profile":rules.profile,"stage":stage,"selected":rules.selected_uid,"buttons":buttons,"plan":rules.best_action(),"viewport":{"w":get_viewport_rect().size.x,"h":get_viewport_rect().size.y}}
+	var state: Dictionary = {"profile":rules.profile,"stage":stage,"selected":rules.selected_uid,"buttons":buttons,"plan":rules.best_action(),"command":rules.best_command(),"viewport":{"w":get_viewport_rect().size.x,"h":get_viewport_rect().size.y}}
 	JavaScriptBridge.eval("window.__cruiseQA="+JSON.stringify(state))

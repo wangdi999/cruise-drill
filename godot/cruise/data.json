@@ -30,6 +30,36 @@
               "amount": 18
             }
           ]
+        },
+        {
+          "name": "追猎信标",
+          "cost": 1,
+          "target": "enemy",
+          "effects": [
+            {
+              "type": "damage",
+              "amount": 12
+            },
+            {
+              "type": "draw",
+              "amount": 1
+            }
+          ]
+        },
+        {
+          "name": "掩护狙击",
+          "cost": 1,
+          "target": "enemy",
+          "effects": [
+            {
+              "type": "damage",
+              "amount": 11
+            },
+            {
+              "type": "shieldAll",
+              "amount": 3
+            }
+          ]
         }
       ]
     },
@@ -63,6 +93,32 @@
               "amount": 11
             }
           ]
+        },
+        {
+          "name": "余烬扫射",
+          "cost": 1,
+          "target": "allEnemies",
+          "effects": [
+            {
+              "type": "damage",
+              "amount": 7
+            }
+          ]
+        },
+        {
+          "name": "焰幕突进",
+          "cost": 1,
+          "target": "enemy",
+          "effects": [
+            {
+              "type": "damage",
+              "amount": 12
+            },
+            {
+              "type": "shieldSelf",
+              "amount": 6
+            }
+          ]
         }
       ]
     },
@@ -94,6 +150,36 @@
             {
               "type": "heal",
               "amount": 23
+            }
+          ]
+        },
+        {
+          "name": "战地循环",
+          "cost": 1,
+          "target": "ally",
+          "effects": [
+            {
+              "type": "heal",
+              "amount": 14
+            },
+            {
+              "type": "draw",
+              "amount": 1
+            }
+          ]
+        },
+        {
+          "name": "急救屏障",
+          "cost": 1,
+          "target": "ally",
+          "effects": [
+            {
+              "type": "heal",
+              "amount": 10
+            },
+            {
+              "type": "shield",
+              "amount": 8
             }
           ]
         }
@@ -131,6 +217,36 @@
             {
               "type": "shieldAll",
               "amount": 3
+            }
+          ]
+        },
+        {
+          "name": "协同标记",
+          "cost": 1,
+          "target": "enemy",
+          "effects": [
+            {
+              "type": "damage",
+              "amount": 10
+            },
+            {
+              "type": "draw",
+              "amount": 1
+            }
+          ]
+        },
+        {
+          "name": "战术掩护",
+          "cost": 1,
+          "target": "none",
+          "effects": [
+            {
+              "type": "draw",
+              "amount": 2
+            },
+            {
+              "type": "shieldAll",
+              "amount": 6
             }
           ]
         }
@@ -174,6 +290,36 @@
               "amount": 1
             }
           ]
+        },
+        {
+          "name": "反击阵线",
+          "cost": 1,
+          "target": "enemy",
+          "effects": [
+            {
+              "type": "damage",
+              "amount": 9
+            },
+            {
+              "type": "shieldSelf",
+              "amount": 10
+            }
+          ]
+        },
+        {
+          "name": "稳固阵地",
+          "cost": 1,
+          "target": "self",
+          "effects": [
+            {
+              "type": "shield",
+              "amount": 14
+            },
+            {
+              "type": "taunt",
+              "amount": 1
+            }
+          ]
         }
       ]
     },
@@ -205,6 +351,32 @@
             {
               "type": "shield",
               "amount": 12
+            }
+          ]
+        },
+        {
+          "name": "流动壁垒",
+          "cost": 1,
+          "target": "ally",
+          "effects": [
+            {
+              "type": "shield",
+              "amount": 15
+            },
+            {
+              "type": "draw",
+              "amount": 1
+            }
+          ]
+        },
+        {
+          "name": "潮汐防线",
+          "cost": 1,
+          "target": "allAllies",
+          "effects": [
+            {
+              "type": "shield",
+              "amount": 7
             }
           ]
         }

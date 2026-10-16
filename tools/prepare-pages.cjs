@@ -2,7 +2,8 @@
 const fs=require('node:fs'),path=require('node:path');
 const file=path.resolve(__dirname,'../web/play.html');
 let html=fs.readFileSync(file,'utf8');
-if(html.includes('coi-serviceworker.js')){console.log('Pages 入口已准备。');process.exit(0);}
+if(!html.includes('href="data:,"')) html=html.replace('<head>','<head>\n<link rel="icon" href="data:,">');
+if(html.includes('coi-serviceworker.js')){fs.writeFileSync(file,html,'utf8');console.log('Pages 入口已准备。');process.exit(0);}
 html=html.replace('<script src="play.js"></script>','<script>window.coi={quiet:true};</script>\n<script src="../coi-serviceworker.js"></script>\n<script src="play.js"></script>');
 html=html.replace('const engine = new Engine(GODOT_CONFIG);','');
 html=html.replace('(function () {','function startCruise() {\n const engine = new Engine(GODOT_CONFIG);');

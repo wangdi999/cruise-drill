@@ -5,8 +5,8 @@ import subprocess
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-ENGINE=ROOT/'.tools/godot/Godot_v4.3-stable_win64.exe'
-TEMPLATES=ROOT/'.tools/templates'
+ENGINE=Path(os.environ.get('GODOT_BIN',ROOT/'.tools/godot/Godot_v4.3-stable_win64.exe'))
+TEMPLATES=Path(os.environ.get('GODOT_TEMPLATES',ROOT/'.tools/templates'))
 for folder in ['artifacts','build/windows','web']:
     (ROOT/folder).mkdir(parents=True,exist_ok=True)
 

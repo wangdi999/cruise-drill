@@ -20,6 +20,10 @@ var turn: int = 1
 var actions: int = 0
 var logs: Array = []
 var buffs: Dictionary = {}
+var relay: Array = []
+var command_ready: bool = false
+var command_used: bool = false
+var boss_enraged: bool = false
 var error: String = ""
 var clock_override: float = -1
 
@@ -126,7 +130,7 @@ func start(stage_id: int, team: Array) -> bool:
 	for id in team:
 		var h: Dictionary = hero(id)
 		party.append({"id":id,"name":h.name,"role":h.role,"glyph":h.glyph,"hp":h.hp,"maxHp":h.hp,"shield":0})
-	profile.run = {"stage":stage_id,"team":team.duplicate(),"party":party,"route":"","buff":"","node":"route","battle":{},"seed":int(profile.seed)+int(profile.serial)*97,"startedAt":now()}
+	profile.run = {"stage":stage_id,"team":team.duplicate(),"party":party,"route":"","buff":"","node":"route","battle":{},"seed":int(profile.seed)+int(profile.serial)*97,"startedAt":now(),"draft":{},"relayMode":true}
 	add_event("start", {"stage":stage_id,"team":team.duplicate(),"seed":profile.run.seed})
 	error = ""
 	if stage_id == 1: return choose_route("A")
@@ -150,6 +154,25 @@ func choose_route(route: String) -> bool:
 
 func available_buffs(stage_id: int) -> Array:
 	return [["shield","combo"],["healing","power"],["bastion","assault"]][stage_id-1]
+
+func draft_options() -> Array:
+	var options: Array = []
+	# 独立随机源：查看奖励不会改变战斗洗牌，也不会刷新重抽。
+	var random: RandomNumberGenerator = RandomNumberGenerator.new()
+	random.seed = int(profile.run.seed) + 1709
+	for owner in profile.run.team:
+		options.append({"owner":owner,"kind":random.randi_range(2,3)})
+	return options
+
+func choose_draft(owner: String, kind: int) -> bool:
+	if not ensure_active() or profile.run.node != "draft": return reject("当前不能改装牌组。")
+	if not {"owner":owner,"kind":kind} in draft_options(): return reject("请选择本次提供的专属牌。")
+	profile.run.draft = {"owner":owner,"kind":kind}
+	profile.run.node = "buff"
+	add_event("draft",profile.run.draft)
+	error = ""
+	changed.emit()
+	return true
 
 func choose_buff(id: String) -> bool:
 	if not ensure_active(): return reject("活动已经结束。")
@@ -223,12 +246,17 @@ func begin_battle(boss: bool) -> void:
 		for kind in range(2):
 			for copy in range(2):
 				uid += 1
-				draw_pile.add_card(create_card(id,kind,uid))
+				var actual_kind: int = int(run.draft.kind) if boss and kind == 0 and run.get("draft",{}).get("owner","") == id else kind
+				draw_pile.add_card(create_card(id,actual_kind,uid))
 	RNG.instance.seed = int(run.seed)+(701 if boss else 0)
 	draw_pile.shuffle()
 	turn = 1
 	actions = 0
 	last_owner = ""
+	relay = []
+	command_ready = false
+	command_used = false
+	boss_enraged = false
 	logs = ["首领战开始。" if boss else "基础战斗开始。"]
 	draw_cards(5)
 	plan_enemies()
@@ -294,12 +322,52 @@ func play(uid: int, target_id: String = "auto") -> bool:
 	discard_pile.add_card(card)
 	actions += 1
 	card.play(targets,energy_stats,modifiers)
+	if profile.run.get("relayMode",false) and not command_ready:
+		if not relay.has(card.owner_id): relay.append(card.owner_id)
+		if relay.size() == 3:
+			command_ready = true
+			logs.append("三人接力完成：舰队指令已就绪，可跨回合保留。")
+	update_boss_phase()
 	selected_uid = -1
 	error = ""
 	settle()
 	checkpoint()
 	changed.emit()
 	return true
+
+func use_command(id: String) -> bool:
+	if not ensure_active() or not profile.run.node in ["battle","boss"]: return reject("当前无法使用舰队指令。")
+	if not command_ready or command_used or not id in ["strike","barrier","supply"]: return reject("需要完成三人接力，且每回合只能使用一次指令。")
+	command_ready = false
+	command_used = true
+	relay = []
+	match id:
+		"strike":
+			for unit in alive_units(enemies): unit.stats.take_damage(8)
+			logs.append("舰队齐射：敌方全体受到 8 伤害。")
+		"barrier":
+			for unit in alive_units(allies): unit.stats.block += 9
+			logs.append("联合屏障：存活队员各获得 9 护盾。")
+		"supply":
+			for unit in alive_units(allies): unit.stats.heal(6)
+			draw_cards(1)
+			logs.append("应急补给：存活队员各恢复 6，抽 1 张牌。")
+	selected_uid = -1
+	error = ""
+	add_event("command",{"id":id,"turn":turn})
+	update_boss_phase()
+	settle()
+	checkpoint()
+	changed.emit()
+	return true
+
+func update_boss_phase() -> void:
+	if profile.run.node != "boss" or not profile.run.get("relayMode",false) or boss_enraged: return
+	var boss: CruiseUnit = enemies[0]
+	if boss.stats.health > 0 and boss.stats.health * 2 <= boss.stats.max_health:
+		boss_enraged = true
+		logs.append("首领进入过载：攻击 +3，偶数回合改为群攻。意图已更新，结束回合前可继续应对。")
+		plan_enemies()
 
 func resolve_card_effects(card: CruiseCrewCard, targets: Array[Node]) -> void:
 	var owner: CruiseUnit = find_unit(card.owner_id)
@@ -327,8 +395,9 @@ func plan_enemies() -> void:
 	if alive.is_empty(): return
 	for i in range(enemies.size()):
 		var unit: CruiseUnit = enemies[i]
-		var splash: bool = profile.run.node == "boss" and turn % 3 == 0
-		unit.intent = {"type":"all" if splash else "single","target":alive[(turn+i-1)%alive.size()].unit_id,"amount":maxi(6,roundi(unit.damage*0.55)) if splash else unit.damage}
+		var splash: bool = profile.run.node == "boss" and turn % (2 if boss_enraged else 3) == 0
+		var damage: int = unit.damage + (3 if boss_enraged else 0)
+		unit.intent = {"type":"all" if splash else "single","target":alive[(turn+i-1)%alive.size()].unit_id,"amount":maxi(6,roundi(damage*0.55)) if splash else damage}
 
 func end_turn() -> bool:
 	if not ensure_active() or not profile.run.node in ["battle","boss"]: return reject("当前无法结束回合。")
@@ -362,6 +431,7 @@ func end_turn() -> bool:
 			energy_stats.reset_mana()
 			actions = 0
 			last_owner = ""
+			command_used = false
 			draw_cards(5)
 			plan_enemies()
 			logs.append("第 %s 回合：护盾清零，能量恢复。" % turn)
@@ -387,7 +457,7 @@ func settle() -> void:
 			profile.run.node = "complete"
 			add_event("clear", {"stage":profile.run.stage,"duration":now()-float(profile.run.startedAt)})
 		else:
-			profile.run.node = "buff"
+			profile.run.node = "draft" if profile.run.get("relayMode",false) else "buff"
 			add_event("nodeClear", {"stage":profile.run.stage})
 		logs.append("战斗胜利。")
 	elif alive_units(allies).is_empty():
@@ -398,6 +468,7 @@ func settle() -> void:
 func checkpoint() -> void:
 	if profile.run.is_empty() or not energy_stats: return
 	profile.run.battle = {"turn":turn,"energy":energy_stats.mana,"actions":actions,"lastOwner":last_owner,"rngSeed":str(RNG.instance.seed),"rngState":str(RNG.instance.state),"allies":unit_snapshots(allies),"enemies":unit_snapshots(enemies),"deck":pile_snapshot(draw_pile),"hand":pile_snapshot(hand),"discard":pile_snapshot(discard_pile),"log":logs.slice(-60),"mod":buffs.duplicate(true)}
+	profile.run.battle.merge({"relay":relay.duplicate(),"commandReady":command_ready,"commandUsed":command_used,"bossEnraged":boss_enraged})
 
 func unit_snapshots(units: Array[CruiseUnit]) -> Array:
 	var result: Array = []
@@ -435,6 +506,10 @@ func import_profile(data: Variant) -> bool:
 		last_owner = b.lastOwner
 		logs = b.log.duplicate()
 		buffs = b.mod.duplicate(true)
+		relay = b.get("relay",[]).duplicate()
+		command_ready = b.get("commandReady",false)
+		command_used = b.get("commandUsed",false)
+		boss_enraged = b.get("bossEnraged",false)
 		RNG.set_from_save_data(int(b.rngSeed),int(b.rngState))
 	error = ""
 	return true
@@ -453,7 +528,10 @@ func valid_profile(data: Variant) -> bool:
 	var r: Dictionary = data.run
 	for key in ["stage","team","party","route","buff","node","battle","seed","startedAt"]:
 		if not r.has(key): return false
-	if not r.team is Array or not valid_team(r.team) or not int(r.stage) in [1,2,3] or not r.node in ["route","battle","buff","boss","complete","failed"]: return false
+	if not r.team is Array or not valid_team(r.team) or not int(r.stage) in [1,2,3] or not r.node in ["route","battle","draft","buff","boss","complete","failed"]: return false
+	if r.has("draft"):
+		if not r.draft is Dictionary: return false
+		if not r.draft.is_empty() and (not r.draft.get("owner","") in r.team or not int(r.draft.get("kind",-1)) in [2,3]): return false
 	if not r.buff.is_empty() and not config.buffs.has(r.buff): return false
 	if r.node == "route": return r.battle is Dictionary
 	if not r.battle is Dictionary: return false
@@ -463,7 +541,13 @@ func valid_profile(data: Variant) -> bool:
 	for key in ["deck","hand","discard"]:
 		if not b[key] is Array: return false
 		for c in b[key]:
-			if not c is Dictionary or not c.has("owner") or not c.has("kind") or not c.has("uid") or hero(str(c.owner)).is_empty() or not int(c.kind) in [0,1]: return false
+			if not c is Dictionary or not c.has("owner") or not c.has("kind") or not c.has("uid") or hero(str(c.owner)).is_empty() or not int(c.kind) in [0,1,2,3]: return false
+	if b.has("relay"):
+		if not b.relay is Array or b.relay.size() > 3: return false
+		for owner in b.relay:
+			if not owner in r.team: return false
+	for key in ["commandReady","commandUsed","bossEnraged"]:
+		if b.has(key) and not b[key] is bool: return false
 	for key in ["allies","enemies"]:
 		if not b[key] is Array or b[key].is_empty(): return false
 		for u in b[key]:
@@ -512,6 +596,19 @@ func buy(id: String) -> bool:
 	changed.emit()
 	return true
 
+func best_command() -> String:
+	if profile.run.is_empty() or not profile.run.node in ["battle","boss"] or not command_ready or command_used: return ""
+	var missing: int = 0
+	var threatened: int = 0
+	for ally in alive_units(allies):
+		missing += mini(6,ally.stats.max_health-ally.stats.health)
+		for enemy in alive_units(enemies):
+			if enemy.intent.type == "all" or enemy.intent.target == ally.unit_id:
+				threatened += mini(9,maxi(0,int(enemy.intent.amount)-ally.stats.block))
+	if missing >= 10: return "supply"
+	if threatened >= 15: return "barrier"
+	return "strike"
+
 func best_action() -> Dictionary:
 	if profile.run.is_empty() or not profile.run.node in ["battle","boss"]: return {}
 	var best: Dictionary = {}
@@ -540,6 +637,7 @@ func best_action() -> Dictionary:
 							if enemy.intent.type == "all" or enemy.intent.target == ally.unit_id: incoming += int(enemy.intent.amount)
 						score += mini(maxi(0,incoming-ally.stats.block),amount)*(2.6 if ally.stats.health < incoming else 0.65)
 				elif effect.type == "draw" and energy_stats.mana > 1: score += 5
+			if profile.run.get("relayMode",false) and not command_ready and not relay.has(card.owner_id): score += 4 + relay.size()*2
 			score /= maxi(1,card.cost)
 			if score > best_score:
 				best_score = score

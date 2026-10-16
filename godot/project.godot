@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="巡航演练 · 舰队协同"
+config/name="巡航演练 · 接力改装"
 config/tags=PackedStringArray("gamelab")
 run/main_scene="res://cruise/main.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
