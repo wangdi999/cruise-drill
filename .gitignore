@@ -1,0 +1,14 @@
+.tools/
+.test-tools/
+.godot/
+godot/.godot/
+godot/export_presets.cfg
+__pycache__/
+*.pyc
+build/
+artifacts/*
+!artifacts/*.png
+!artifacts/godot-tests.json
+!artifacts/browser-report.json
+!artifacts/source-audit.json
+!artifacts/upstream-changes.diff

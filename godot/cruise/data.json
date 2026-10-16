@@ -1,0 +1,319 @@
+{
+  "heroes": [
+    {
+      "id": "ranger",
+      "name": "岚锋",
+      "role": "输出",
+      "hp": 44,
+      "glyph": "弓",
+      "color": "green",
+      "desc": "稳定单体伤害，集中火力优先击破。",
+      "cards": [
+        {
+          "name": "精准射击",
+          "cost": 1,
+          "target": "enemy",
+          "effects": [
+            {
+              "type": "damage",
+              "amount": 8
+            }
+          ]
+        },
+        {
+          "name": "疾风连射",
+          "cost": 2,
+          "target": "enemy",
+          "effects": [
+            {
+              "type": "damage",
+              "amount": 18
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ember",
+      "name": "烬火",
+      "role": "输出",
+      "hp": 36,
+      "glyph": "焰",
+      "color": "orange",
+      "desc": "群体攻击，适合处理两名敌人的压力。",
+      "cards": [
+        {
+          "name": "灼击",
+          "cost": 1,
+          "target": "enemy",
+          "effects": [
+            {
+              "type": "damage",
+              "amount": 8
+            }
+          ]
+        },
+        {
+          "name": "热浪",
+          "cost": 2,
+          "target": "allEnemies",
+          "effects": [
+            {
+              "type": "damage",
+              "amount": 11
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "medic",
+      "name": "澄音",
+      "role": "辅助",
+      "hp": 38,
+      "glyph": "愈",
+      "color": "cyan",
+      "desc": "恢复生命，为连续战斗维持续航。",
+      "cards": [
+        {
+          "name": "急救",
+          "cost": 1,
+          "target": "ally",
+          "effects": [
+            {
+              "type": "heal",
+              "amount": 10
+            }
+          ]
+        },
+        {
+          "name": "紧急救护",
+          "cost": 2,
+          "target": "ally",
+          "effects": [
+            {
+              "type": "heal",
+              "amount": 23
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tactician",
+      "name": "弦策",
+      "role": "辅助",
+      "hp": 40,
+      "glyph": "策",
+      "color": "cyan",
+      "desc": "抽牌与群体护盾，调整手牌寻找联动。",
+      "cards": [
+        {
+          "name": "协同射击",
+          "cost": 1,
+          "target": "enemy",
+          "effects": [
+            {
+              "type": "damage",
+              "amount": 7
+            }
+          ]
+        },
+        {
+          "name": "战术补给",
+          "cost": 1,
+          "target": "none",
+          "effects": [
+            {
+              "type": "draw",
+              "amount": 2
+            },
+            {
+              "type": "shieldAll",
+              "amount": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "guard",
+      "name": "磐石",
+      "role": "保护",
+      "hp": 56,
+      "glyph": "盾",
+      "color": "blue",
+      "desc": "盾击与嘲讽，承接单体伤害。",
+      "cards": [
+        {
+          "name": "盾击",
+          "cost": 1,
+          "target": "enemy",
+          "effects": [
+            {
+              "type": "damage",
+              "amount": 6
+            },
+            {
+              "type": "shieldSelf",
+              "amount": 5
+            }
+          ]
+        },
+        {
+          "name": "守护姿态",
+          "cost": 2,
+          "target": "self",
+          "effects": [
+            {
+              "type": "shield",
+              "amount": 18
+            },
+            {
+              "type": "taunt",
+              "amount": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sentinel",
+      "name": "澜卫",
+      "role": "保护",
+      "hp": 48,
+      "glyph": "垒",
+      "color": "blue",
+      "desc": "定向掩护和全队屏障，抵御群体攻击。",
+      "cards": [
+        {
+          "name": "掩护",
+          "cost": 1,
+          "target": "ally",
+          "effects": [
+            {
+              "type": "shield",
+              "amount": 10
+            }
+          ]
+        },
+        {
+          "name": "水幕屏障",
+          "cost": 2,
+          "target": "allAllies",
+          "effects": [
+            {
+              "type": "shield",
+              "amount": 12
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stages": [
+    {
+      "id": 1,
+      "name": "入门演练",
+      "openDay": 1,
+      "prerequisite": 0,
+      "desc": "学习出牌、恢复与首回合护盾。",
+      "boss": "哨戒机甲",
+      "bossHp": 66,
+      "bossDamage": 12
+    },
+    {
+      "id": 2,
+      "name": "路线演练",
+      "openDay": 2,
+      "prerequisite": 1,
+      "desc": "在稳定补给和风险火力之间取舍。",
+      "boss": "巡航指挥官",
+      "bossHp": 88,
+      "bossDamage": 15
+    },
+    {
+      "id": 3,
+      "name": "组合演练",
+      "openDay": 4,
+      "prerequisite": 2,
+      "desc": "选择成套增益，形成清晰的队伍打法。",
+      "boss": "深空旗舰",
+      "bossHp": 108,
+      "bossDamage": 18
+    }
+  ],
+  "buffs": {
+    "shield": {
+      "id": "shield",
+      "name": "启航护盾",
+      "desc": "首领战首回合，每名存活队员获得 12 护盾。",
+      "effects": {
+        "openingShield": 12
+      }
+    },
+    "combo": {
+      "id": "combo",
+      "name": "连续行动",
+      "desc": "同一角色连续出牌时，从第二张起每次伤害 +3。",
+      "effects": {
+        "combo": 3
+      }
+    },
+    "healing": {
+      "id": "healing",
+      "name": "医疗模块",
+      "desc": "每次卡牌恢复效果 +5；首领战开始时全队恢复 8。",
+      "effects": {
+        "healing": 5,
+        "openingHeal": 8
+      }
+    },
+    "power": {
+      "id": "power",
+      "name": "武器校准",
+      "desc": "每次卡牌伤害 +3，群体攻击对每个目标分别生效。",
+      "effects": {
+        "power": 3
+      }
+    },
+    "bastion": {
+      "id": "bastion",
+      "name": "堡垒协议",
+      "desc": "组合：首回合全队护盾 12 + 每回合开始全队恢复 3。",
+      "effects": {
+        "openingShield": 12,
+        "regen": 3
+      }
+    },
+    "assault": {
+      "id": "assault",
+      "name": "追击协议",
+      "desc": "组合：每次伤害 +2 + 同角色连续出牌时伤害再 +3。",
+      "effects": {
+        "power": 2,
+        "combo": 3
+      }
+    }
+  },
+  "shop": [
+    {
+      "id": "frame",
+      "name": "巡航头像框",
+      "price": 100,
+      "glyph": "◈"
+    },
+    {
+      "id": "materials",
+      "name": "养成材料包",
+      "price": 80,
+      "glyph": "▣"
+    },
+    {
+      "id": "emotes",
+      "name": "演练表情套装",
+      "price": 120,
+      "glyph": "☺"
+    }
+  ]
+}

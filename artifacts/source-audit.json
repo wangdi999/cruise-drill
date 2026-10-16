@@ -1,0 +1,70 @@
+{
+  "source": "https://github.com/guladam/deck_builder_tutorial",
+  "commit": "91b408bc660e9b7389892dd4242a4d76e5bc9e77",
+  "license": "MIT",
+  "author": "Adam Gulacsi",
+  "copied_core": [
+    {
+      "file": "custom_resources/card.gd",
+      "unchanged": true,
+      "upstream_sha256": "bfa0ccd272bd49bc0c74e439a26df25090f0ba6b33415e2df33c608a79da21b2",
+      "runtime_sha256": "bfa0ccd272bd49bc0c74e439a26df25090f0ba6b33415e2df33c608a79da21b2"
+    },
+    {
+      "file": "custom_resources/card_pile.gd",
+      "unchanged": true,
+      "upstream_sha256": "70b8df132728da91a1b349e7575721f0c4189ed1d8faa5e1b48be5eac1e2bd8a",
+      "runtime_sha256": "70b8df132728da91a1b349e7575721f0c4189ed1d8faa5e1b48be5eac1e2bd8a"
+    },
+    {
+      "file": "custom_resources/stats.gd",
+      "unchanged": true,
+      "upstream_sha256": "eb9369f3be49ff57b749e87b2149796bb79b2952e2579dcaa707d90ffd22ccda",
+      "runtime_sha256": "eb9369f3be49ff57b749e87b2149796bb79b2952e2579dcaa707d90ffd22ccda"
+    },
+    {
+      "file": "custom_resources/character_stats.gd",
+      "unchanged": false,
+      "upstream_sha256": "91ca00d7e61bc14c41a8e5d3c8c626ba951f06dc49c86ac793824e18b84b24db",
+      "runtime_sha256": "bb532cef757901989ccaef907fa7d134c734dac17283f3523417df60f50599bb"
+    },
+    {
+      "file": "global/rng.gd",
+      "unchanged": true,
+      "upstream_sha256": "14aa41bcad14913c975d7c758b922439bf7bd54c443a0492af543aaa63ce7c53",
+      "runtime_sha256": "14aa41bcad14913c975d7c758b922439bf7bd54c443a0492af543aaa63ce7c53"
+    },
+    {
+      "file": "scenes/modifier_handler/modifier.gd",
+      "unchanged": true,
+      "upstream_sha256": "1c30b3357e5802155b7d9d7ae22b46092e472dcd1a8c208c5c711063b82cc69f",
+      "runtime_sha256": "1c30b3357e5802155b7d9d7ae22b46092e472dcd1a8c208c5c711063b82cc69f"
+    },
+    {
+      "file": "scenes/modifier_handler/modifier_handler.gd",
+      "unchanged": true,
+      "upstream_sha256": "4f234eee87953feba7c7b3cb7977c28ec441210e17f8a3892e8463e9786c4a9c",
+      "runtime_sha256": "4f234eee87953feba7c7b3cb7977c28ec441210e17f8a3892e8463e9786c4a9c"
+    },
+    {
+      "file": "scenes/modifier_handler/modifier_value.gd",
+      "unchanged": true,
+      "upstream_sha256": "722ef3340377ed6bd8aa663b8630a5f93777840c041618663aa14beebddbc654",
+      "runtime_sha256": "722ef3340377ed6bd8aa663b8630a5f93777840c041618663aa14beebddbc654"
+    }
+  ],
+  "new_activity_files": [
+    "cruise/crew_card.gd",
+    "cruise/data.json",
+    "cruise/events.gd",
+    "cruise/main.gd",
+    "cruise/main.tscn",
+    "cruise/rules.gd",
+    "cruise/unit.gd",
+    "cruise/assets/OFL.txt",
+    "cruise/assets/PortfolioSans.ttf",
+    "cruise/tests/test_suite.gd",
+    "cruise/tests/test_suite.tscn"
+  ],
+  "note": "上游资源层复用；原战斗场景、拖拽界面、地图和遗物流程未接入。"
+}
